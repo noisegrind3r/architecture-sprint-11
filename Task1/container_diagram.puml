@@ -1,0 +1,96 @@
+@startuml
+title FutureCompany Container Diagram
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+Person(medic, "Оператор", "Оператор сервиса")
+Person(finance, "Оператор", "Оператор сервиса")
+Person(user, "Оператор", "Оператор сервиса")
+
+Person(ai_spec, "МЛ специалист", "Специалист по данным МЛ")
+Person(analytic, "Аналитик", "Бизнес-аналитик")
+
+System(FutureCompanySystem, "SmartHome", "Система компании Будущее 2.0")
+
+Container_Boundary(FutureCompanySystem, "Система компании Будущее 2.0") {
+
+  Container(MedicalService, "Медицинские сервисы", "", "Клиентский интерфейс оператора")
+  Container(FintechService, "Финтех-сервисы", "Golang, Java", "Финтех-сервисы на Golang и Java")
+  Container(InnerService, "Внутренние сервисы", "", "Внутренние сервисы")
+
+  ContainerDb(MedicalServiceDb, "БД медицинского сервиса", "Postgres")
+  ContainerDb(FintechServiceDb, "БД финансового сервиса", "Postgres")
+  ContainerDb(InnerServiceDb, "БД внутренних сервисов", "Postgres")
+
+  Container(DataBus, "Шина данных", "Apache Camel", "Старая шина на базе Apache Camel")
+  Container(Debezium, "Захват данных", "Debezium", "Захват данных для DataLakehouse")
+
+  Container_Boundary(DataLakehouse, "DataLakehouse") {
+
+    Container_Boundary(UnstructureData, "Неструктурированные данные") {
+
+      ContainerDb(MiniIoUnstruct, "Объектное хранилище", "MiniIO", "Хранилище для неструктурированных данных")
+    }
+
+    Container(Airflow, "Airflow", "Apache Airflow", "ETL-система")
+
+    Container_Boundary(StructureData, "Структурированные данные") {
+      Container(Dremio, "Витрина данных", "Dremio", "Отображение данных для аналитиков")
+
+      Container(Nessie, "Каталог данных", "Nessie", "Хранилище метаданных")
+      ContainerDb(MiniIoStruct, "Объектное хранилище", "MiniIO", "Хранилище для структурированных данных")
+
+      Container(DataHub, "Определение метаданных", "DataHub", "Автоматическое определение метаданных")
+
+    }
+  }
+  Container(DWH, "DWH-система", "MS-SQL", "Старая DWH-система")
+  Container(PowerBI, "Power BI", "Power BI", "Power BI")
+  Container(AIService, "ИИ-Сервисы", "Python", "ИИ-сервисы на Python")
+  ContainerQueue(Kafka, "Брокер сообщений", "Kafka", "Взаимодействие между сервисами")
+}
+
+Rel_D(medic, MedicalService, "Использует приложение")
+Rel_D(finance, FintechService, "Использует приложение")
+Rel_D(user, InnerService, "Использует приложение")
+
+Rel_D(MedicalService, MedicalServiceDb, "Сохраняет данные")
+Rel_D(FintechService, FintechServiceDb, "Сохраняет данные")
+Rel_D(InnerService, InnerServiceDb, "Сохраняет данные")
+
+Rel_D(ai_spec, AIService, "Машинное обучение")
+Rel_D(analytic, PowerBI, "Проводит аналитику")
+
+Rel_D(analytic, Dremio, "Проводит аналитику")
+
+Rel_D(MedicalService, DataBus, "Отправка данных")
+Rel_D(FintechService, DataBus, "Отправка данных")
+Rel_D(InnerService, DataBus, "Отправка данных")
+
+Rel_D(MedicalService, Kafka, "Межсервисное взаимодействие")
+Rel_D(FintechService, Kafka, "Межсервисное взаимодействие")
+Rel_D(InnerService, Kafka, "Межсервисное взаимодействие")
+
+
+Rel_D(MedicalServiceDb, Debezium, "Отправка данных")
+Rel_D(FintechServiceDb, Debezium, "Отправка данных")
+Rel_D(InnerServiceDb, Debezium, "Сохранение неструктурированных данных")
+
+Rel_D(DataBus, DWH, "Отправка данных")
+Rel_D(Debezium, Kafka, "Отправка данных")
+Rel_R(Kafka, UnstructureData, "Отправка данных")
+
+Rel_U(MiniIoUnstruct, Airflow, "ETL","Трансформирует данные")
+Rel_U(Airflow, MiniIoStruct, "ETL","Сохранение структурированных данных")
+
+Rel_Neighbor(Dremio, Nessie, "Работа с данными")
+Rel_D(Dremio, MiniIoStruct, "Работа с данными")
+
+Rel_D(MiniIoStruct, DataHub, "Определение метаданных")
+
+BiRel_U(AIService, MiniIoUnstruct, "Обмен данными")
+Rel_L(PowerBI, DWH, "Данные для аналитики")
+
+@enduml

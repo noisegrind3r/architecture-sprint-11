@@ -1,0 +1,46 @@
+@startuml
+title FutureCompany Data Flow Diagrams
+
+top to bottom direction
+
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Context.puml
+
+System(MedicalDomain, "Домен медицинских данных", "Работам с медицинскими данными")
+System(FintechDomain, "Домен финансовых данных", "Работа с финансовыми данными")
+System(InnerServiceDomain, "Домен внутренних данных", "Работа с внутренними данными")
+System(ClientDomain, "Домен клиентских данных", "Работа с персональными данными клиентов")
+System_Ext(OuterServiceDomain, "Домен данных внешних сервисов", "Работа с данными внешних сервисов")
+System(AIServiceDomain, "Домен машинного обучения", "Работа с моделями машинного обучения")
+
+System(Debezium, "Захват данных", "Работа с моделями машинного обучения")
+SystemQueue(Kafka, "Брокер сообщений", "Отправка данных")
+SystemDb(MiniIO, "Неструктурированные данные", "Хранение неструктурированных данных")
+System(Airflow, "Airflow", "Преобразование данных")
+SystemDb(MiniIO2, "Структурированные данные", "Хранение структурированных данных")
+System(DataHub, "DataHub", "Категоризация данных")
+System(DataLakeHouse, "Data LakeHouse", "Работа с моделями машинного обучения")
+
+Rel(MedicalDomain, Debezium, "Захватывает медицинские данные")
+Rel(FintechDomain, Debezium, "Захватывает финансовые данные")
+Rel(InnerServiceDomain, Debezium, "Захватывает внутренние данные")
+Rel(ClientDomain, Debezium, "Захватывает персональные данные")
+Rel(OuterServiceDomain, Debezium, "Захватывает персональные данные")
+
+Rel(Debezium, Kafka, "Отправляет данные в очередь")
+Rel(Kafka, MiniIO, "Сохраняет неструктурированные данные")
+Rel(MiniIO, Airflow, "Обрабатывает и изменяет данные")
+Rel(Airflow, MiniIO2, "Сохраняет структурированные данные")
+Rel(DataHub, MiniIO2, "Определяет метаданные")
+Rel(DataLakeHouse, MiniIO2, "Обрабатывает данные")
+
+Rel(AIServiceDomain, MiniIO, "Получает данные для машинного обучения")
+Rel(MiniIO, AIServiceDomain, "Отправляет новые данные для аналитики")
+
+Rel(MedicalDomain, Kafka, "Межсервисное взаимодействие в обе стороны")
+Rel(FintechDomain, Kafka, "Межсервисное взаимодействие в обе стороны")
+Rel(InnerServiceDomain, Kafka, "Межсервисное взаимодействие в обе стороны")
+Rel(ClientDomain, Kafka, "Межсервисное взаимодействие в обе стороны")
+Rel(ClientDomain, Kafka, "Межсервисное взаимодействие в обе стороны")
+Rel(AIServiceDomain, Kafka, "Межсервисное взаимодействие в обе стороны")
+
+@enduml
